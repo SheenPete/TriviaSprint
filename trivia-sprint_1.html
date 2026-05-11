@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Trivia Sprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --yellow:#FFD700;--coral:#FF6B4A;--teal:#00D4B4;--navy:#0D0E21;--card:#171830;
+  --green:#2ECC71;--red:#E74C3C;--purple:#9B59B6;
+  --text:#F0F0FF;--muted:#8A8AB0;
+}
+html,body{height:100%;height:100dvh;overflow:hidden;
+  font-family:'Nunito',sans-serif;background:var(--navy);color:var(--text);}
+body::before{
+  content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse at 20% 20%,rgba(255,215,0,.07),transparent 50%),
+             radial-gradient(ellipse at 80% 80%,rgba(0,212,180,.07),transparent 50%);
+  pointer-events:none;z-index:0;
+}
+#app{
+  position:relative;z-index:1;
+  width:100%;max-width:540px;margin:0 auto;
+  height:100dvh;
+  display:flex;flex-direction:column;
+  padding:env(safe-area-inset-top,10px) 14px env(safe-area-inset-bottom,10px);
+  overflow:hidden;
+}
+
+/* WELCOME */
+.welcome-wrap{display:flex;flex-direction:column;height:100%;justify-content:space-between;padding:2px 0;}
+.welcome-top{text-align:center;}
+h1.game-title{
+  font-family:'Boogaloo',cursive;font-size:clamp(2rem,9vw,3.2rem);letter-spacing:2px;
+  background:linear-gradient(135deg,var(--yellow),var(--coral));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.05;
+}
+h1.game-title span{-webkit-text-fill-color:var(--teal);}
+.subtitle{color:var(--muted);font-size:.75rem;font-weight:700;margin-top:2px;}
+
+/* MASCOT */
+.mascot-sm{display:flex;justify-content:center;}
+.mascot-sm svg{filter:drop-shadow(0 5px 12px rgba(0,0,0,.4));}
+
+/* CARD */
+.card{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:12px 14px;position:relative;}
+
+/* INPUT / BUTTONS */
+.name-input{
+  width:100%;padding:12px 18px;background:rgba(255,255,255,.06);
+  border:2px solid rgba(255,255,255,.15);border-radius:50px;color:var(--text);
+  font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;
+  text-align:center;outline:none;transition:border-color .2s;
+}
+.name-input:focus{border-color:var(--yellow);}
+.name-input::placeholder{color:var(--muted);}
+.btn{
+  font-family:'Nunito',sans-serif;font-weight:800;font-size:.95rem;
+  padding:11px 20px;border-radius:50px;border:none;cursor:pointer;
+  transition:all .15s;display:flex;align-items:center;justify-content:center;gap:7px;width:100%;
+}
+.btn-primary{background:linear-gradient(135deg,var(--yellow),#FFA500);color:#111;box-shadow:0 4px 14px rgba(255,215,0,.22);}
+.btn-primary:active{transform:scale(.97);}
+.btn-ghost{background:transparent;color:var(--text);border:2px solid rgba(255,255,255,.2);}
+.btn-ghost:active{border-color:var(--yellow);color:var(--yellow);}
+.btn-danger{background:linear-gradient(135deg,var(--coral),#FF3E3E);color:#fff;}
+
+/* RULES ROW */
+.rules-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center;}
+.rule-icon{font-size:1.2rem;}
+.rule-label{font-size:.68rem;color:var(--muted);font-weight:700;margin-top:2px;}
+
+/* QUESTION SCREEN */
+.q-screen{display:flex;flex-direction:column;height:100%;gap:7px;}
+.hud{display:flex;align-items:center;padding:0 2px;flex-shrink:0;gap:10px;}
+.hud-item{text-align:center;flex-shrink:0;}
+.hud-label{font-size:.65rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;}
+.hud-value{font-family:'Boogaloo',cursive;font-size:1.5rem;color:var(--yellow);line-height:1.1;}
+.timer-pill{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.06);border-radius:50px;padding:5px 12px;flex:1;}
+.timer-num{font-family:'Boogaloo',cursive;font-size:1.5rem;min-width:22px;text-align:center;}
+.timer-bar-wrap{flex:1;background:rgba(255,255,255,.1);border-radius:50px;height:6px;overflow:hidden;}
+.timer-bar{height:100%;border-radius:50px;transition:width 1s linear,background .5s;}
+.q-card{flex:1;display:flex;flex-direction:column;min-height:0;}
+.category-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.22);
+  border-radius:50px;padding:3px 10px;
+  font-size:.68rem;font-weight:800;color:var(--yellow);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;
+}
+.difficulty-pip{display:inline-flex;gap:3px;margin-bottom:5px;}
+.pip{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.12);}
+.pip.active{background:var(--yellow);}
+.pip.active.med{background:var(--coral);}
+.pip.active.hard{background:var(--red);}
+.pip.active.exp{background:var(--purple);}
+.q-meta{font-size:.68rem;font-weight:700;color:var(--muted);margin-bottom:3px;}
+.q-text{font-size:.95rem;font-weight:700;line-height:1.4;margin-bottom:8px;flex-shrink:0;}
+.answer-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;flex:1;}
+.answer-btn{
+  background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);
+  border-radius:11px;color:var(--text);
+  font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:700;
+  padding:9px 8px;cursor:pointer;text-align:left;
+  transition:all .15s;display:flex;align-items:flex-start;gap:6px;line-height:1.3;
+}
+.answer-btn:active:not(:disabled){background:rgba(255,215,0,.08);border-color:var(--yellow);}
+.answer-btn:disabled{cursor:default;}
+.answer-btn.correct{background:rgba(46,204,113,.15);border-color:var(--green);animation:correctPulse .4s ease;}
+.answer-btn.wrong{background:rgba(231,76,60,.15);border-color:var(--red);animation:wrongShake .35s ease;}
+.answer-btn.reveal-correct{background:rgba(46,204,113,.15);border-color:var(--green);}
+.answer-label{width:22px;height:22px;border-radius:5px;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;font-weight:900;}
+
+/* REVEAL */
+.reveal-wrap{display:flex;flex-direction:column;height:100%;gap:7px;justify-content:space-between;}
+.reveal-title{font-family:'Boogaloo',cursive;font-size:1.9rem;line-height:1;text-align:center;}
+.reveal-pts{font-size:.8rem;color:var(--muted);font-weight:700;text-align:center;}
+.reveal-answer-box{background:rgba(255,255,255,.04);border-radius:11px;padding:9px 13px;}
+.reveal-answer-label{font-size:.67rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
+.reveal-answer-text{font-weight:700;font-size:.9rem;color:var(--green);}
+.fun-fact-box{background:rgba(0,212,180,.07);border:1px solid rgba(0,212,180,.18);border-radius:11px;padding:9px 13px;flex:1;}
+.fun-fact-label{font-size:.67rem;font-weight:800;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;display:flex;align-items:center;gap:4px;}
+.fun-fact-text{font-size:.82rem;color:rgba(240,240,255,.82);line-height:1.4;}
+
+/* GAMEOVER */
+.gameover-wrap{display:flex;flex-direction:column;height:100%;gap:7px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.go-label{font-family:'Boogaloo',cursive;font-size:1rem;color:var(--muted);}
+.go-score{font-family:'Boogaloo',cursive;font-size:clamp(2.8rem,11vw,4rem);color:var(--yellow);line-height:1;}
+.go-qs{font-size:.8rem;color:var(--muted);font-weight:700;}
+.go-pts{font-family:'Boogaloo',cursive;font-size:1.2rem;color:var(--muted);}
+.go-emojis{font-size:1.2rem;letter-spacing:1px;margin:3px 0;}
+.share-box{background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.16);border-radius:9px;padding:9px 12px;font-size:.76rem;color:var(--muted);line-height:1.5;cursor:pointer;}
+.share-box strong{color:var(--text);display:block;font-size:.67rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;}
+
+/* LEADERBOARD */
+.lb-title-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
+.lb-title{font-family:'Boogaloo',cursive;font-size:1.1rem;}
+.lb-date{font-size:.68rem;color:var(--muted);font-weight:600;}
+.lb-row{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:9px;background:rgba(255,255,255,.04);margin-bottom:4px;}
+.lb-rank{font-family:'Boogaloo',cursive;font-size:1.1rem;width:26px;text-align:center;flex-shrink:0;}
+.lb-rank.gold{color:var(--yellow);}
+.lb-rank.silver{color:#C0C0C0;}
+.lb-rank.bronze{color:#CD7F32;}
+.lb-rank.other{color:var(--muted);}
+.lb-name{flex:1;font-weight:700;font-size:.85rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.lb-score{font-family:'Boogaloo',cursive;font-size:1rem;color:var(--yellow);}
+.lb-qs{font-size:.68rem;color:var(--muted);margin-left:2px;}
+
+/* LOADING */
+.loading-wrap{display:flex;flex-direction:column;height:100%;align-items:center;justify-content:center;gap:14px;}
+.loading-dots span{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--yellow);margin:0 3px;animation:bounce .8s ease infinite;}
+.loading-dots span:nth-child(2){animation-delay:.15s;}
+.loading-dots span:nth-child(3){animation-delay:.3s;}
+
+.divider{border:none;border-top:1px solid rgba(255,255,255,.07);margin:9px 0;}
+
+/* ANIMATIONS */
+@keyframes correctPulse{0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
+@keyframes wrongShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes mascotBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes mascotShake{0%,100%{transform:rotate(0)}25%{transform:rotate(-4deg)}75%{transform:rotate(4deg)}}
+@keyframes mascotJump{0%,100%{transform:translateY(0)}50%{transform:translateY(-11px)}}
+@keyframes timerPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.screen-enter{animation:fadeSlideIn .3s ease both;}
+.mascot-idle{animation:mascotBob 2.5s ease-in-out infinite;}
+.mascot-stressed{animation:mascotShake .5s ease-in-out infinite;}
+.mascot-happy{animation:mascotJump .6s ease-in-out;}
+.mascot-panicking{animation:mascotShake .22s ease-in-out infinite;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const S={screen:'welcome',name:'',questions:[],qIndex:0,score:0,timeLeft:10,chosen:null,isCorrect:null,leaderboard:[],timer:null,survived:0};
+const GAME_URL='https://sheenpete.github.io/TriviaSprint/';
+
+const FALLBACK=[
+  {category:'Pop Culture',question:'Which Disney film features a lion named Simba?',options:['The Lion King','Jungle Book','Bambi','Tarzan'],correctIndex:0,funFact:'The Lion King (1994) was loosely based on Shakespeare\'s Hamlet and remains Disney\'s highest-grossing hand-drawn animated film.',difficulty:'easy'},
+  {category:'Science',question:'What is the chemical symbol for gold?',options:['Go','Gd','Au','Ag'],correctIndex:2,funFact:'Au comes from the Latin "aurum." Gold has been used by humans for over 6,000 years and is one of the few metals found pure in nature.',difficulty:'easy'},
+  {category:'Geography',question:'What is the capital city of Australia?',options:['Sydney','Melbourne','Brisbane','Canberra'],correctIndex:3,funFact:'Canberra was purpose-built as a compromise after Sydney and Melbourne both wanted to be the capital, officially founded in 1913.',difficulty:'easy'},
+  {category:'History',question:'Who was the first President of the United States?',options:['John Adams','Benjamin Franklin','George Washington','Thomas Jefferson'],correctIndex:2,funFact:'George Washington was unanimously elected by the Electoral College — the only president ever to receive 100% of electoral votes.',difficulty:'easy'},
+  {category:'Sports',question:'In which sport would you perform a "slam dunk"?',options:['Volleyball','Basketball','Tennis','Baseball'],correctIndex:1,funFact:'The slam dunk was banned in college basketball from 1967–1976, largely because Kareem Abdul-Jabbar was so dominant at it.',difficulty:'easy'},
+  {category:'Science',question:'How many bones are in the adult human body?',options:['186','206','226','246'],correctIndex:1,funFact:'Babies are born with ~270–300 bones. Many fuse during growth, leaving adults with exactly 206.',difficulty:'medium'},
+  {category:'History',question:'In what year did World War II end?',options:['1943','1944','1945','1946'],correctIndex:2,funFact:'WWII officially ended September 2, 1945 when Japan signed surrender documents aboard USS Missouri — 2,194 days after Germany invaded Poland.',difficulty:'medium'},
+  {category:'Technology',question:'What does "HTTP" stand for?',options:['HyperText Transfer Protocol','High Traffic Transfer Program','Hyper Tech Transmission Protocol','HyperText Transmission Process'],correctIndex:0,funFact:'HTTP was invented by Tim Berners-Lee in 1989. The secure HTTPS version is now used by over 80% of all websites.',difficulty:'medium'},
+  {category:'Geography',question:'Which country has the most natural lakes?',options:['Russia','USA','Brazil','Canada'],correctIndex:3,funFact:'Canada has over 879,000 lakes — more than all other countries combined — holding roughly 20% of the world\'s fresh surface water.',difficulty:'medium'},
+  {category:'Science',question:'Which planet has the most moons in our solar system?',options:['Jupiter','Saturn','Uranus','Neptune'],correctIndex:1,funFact:'Saturn overtook Jupiter in 2023 with 62 newly discovered moons, bringing its total to 146.',difficulty:'medium'},
+  {category:'Literature',question:'Who wrote the novel "1984"?',options:['Aldous Huxley','Ray Bradbury','George Orwell','H.G. Wells'],correctIndex:2,funFact:'George Orwell wrote 1984 while gravely ill on the remote Scottish island of Jura. He died just seven months after its 1949 publication.',difficulty:'hard'},
+  {category:'History',question:'Which ancient wonder was located in Alexandria, Egypt?',options:['Colossus of Rhodes','Temple of Artemis','Lighthouse of Alexandria','Statue of Zeus'],correctIndex:2,funFact:'The Lighthouse of Alexandria stood 100–140 metres tall, making it one of the tallest man-made structures for centuries before earthquakes destroyed it.',difficulty:'hard'},
+  {category:'Science',question:'What is the speed of light in a vacuum (km/s)?',options:['199,792','299,792','399,792','499,792'],correctIndex:1,funFact:'Light travels exactly 299,792,458 m/s — this value is now used to define the metre itself in the International System of Units.',difficulty:'hard'},
+  {category:'Music',question:'Freddie Mercury was the lead singer of which band?',options:['Led Zeppelin','The Rolling Stones','Queen','Aerosmith'],correctIndex:2,funFact:'Researchers found Mercury\'s vocal vibrato ran at ~7.5 Hz — unusually fast — and his range spanned from 92.2 Hz to 784 Hz.',difficulty:'hard'},
+  {category:'Geography',question:'What is the deepest lake in the world?',options:['Lake Superior','Caspian Sea','Lake Baikal','Crater Lake'],correctIndex:2,funFact:'Lake Baikal in Siberia is 1,642 metres deep and holds about 20% of the world\'s unfrozen surface fresh water.',difficulty:'hard'},
+  {category:'Astronomy',question:'What is the Chandrasekhar limit?',options:['Max speed of a white dwarf','Mass threshold for neutron star collapse','Min mass for nuclear fusion','Max white dwarf mass before collapse'],correctIndex:3,funFact:'About 1.4 solar masses — above this a white dwarf collapses into a neutron star or black hole. This earned Chandrasekhar the 1983 Nobel Prize.',difficulty:'expert'},
+  {category:'Biology',question:"What is the world's smallest flowering plant?",options:['Wolffia globosa','Lemna minor','Azolla caroliniana','Spirodela polyrhiza'],correctIndex:0,funFact:'Wolffia globosa is roughly the size of a grain of rice (0.1–0.2mm) and is edible — it has been consumed in Southeast Asia for centuries.',difficulty:'expert'},
+  {category:'History',question:'Which treaty ended the Thirty Years War in 1648?',options:['Treaty of Utrecht','Peace of Westphalia','Treaty of Augsburg','Peace of Prague'],correctIndex:1,funFact:'The Peace of Westphalia is considered the foundation of the modern nation-state system and the principle of sovereignty still used in international law today.',difficulty:'expert'},
+  {category:'Physics',question:'What subatomic particle was confirmed at CERN in 2012?',options:['Graviton','Dark matter particle','Higgs boson','Tachyon'],correctIndex:2,funFact:'The Higgs boson gives other particles their mass. Its discovery confirmed the final missing piece of the Standard Model after a 48-year search.',difficulty:'expert'},
+  {category:'Mathematics',question:"What is Euler's identity often called?",options:['The most beautiful equation','The fundamental theorem','Gödel\'s theorem','Fermat\'s last conjecture'],correctIndex:0,funFact:'Euler\'s identity (e^iπ + 1 = 0) unites five fundamental constants. Richard Feynman called it "the most remarkable formula in mathematics".',difficulty:'expert'},
+];
+
+function getMascot(mood,w,h){
+  w=w||90;h=h||180;
+  const sk='#F5C5A3',su='#1E2B5A',ha='#F5D020',ti='#CC2200';
+  let sweat='',mouth='',brows='',arms='',anim='';
+  if(mood==='panicking'||mood==='stressed'){
+    sweat=`<ellipse cx="22" cy="55" rx="3" ry="5" fill="#87CEEB" opacity=".85"/>
+           <ellipse cx="88" cy="62" rx="2" ry="4" fill="#87CEEB" opacity=".75"/>`;
+    anim=mood==='panicking'?'class="mascot-panicking"':'class="mascot-stressed"';
+  }
+  if(mood==='idle'||mood==='stressed'||mood==='panicking'){
+    mouth=`<ellipse cx="55" cy="78" rx="8" ry="6" fill="#8B3A3A"/>
+           <ellipse cx="55" cy="75" rx="5" ry="3" fill="${sk}"/>`;
+    brows=`<path d="M40 50 Q47 45 54 50" stroke="#7A5500" fill="none" stroke-width="2" stroke-linecap="round"/>
+           <path d="M57 50 Q64 45 71 50" stroke="#7A5500" fill="none" stroke-width="2" stroke-linecap="round"/>`;
+    if(mood==='idle')anim='class="mascot-idle"';
+  }
+  if(mood==='happy'){
+    mouth=`<path d="M45 76 Q55 88 65 76" stroke="#8B3A3A" fill="none" stroke-width="2.5" stroke-linecap="round"/>`;
+    brows=`<path d="M40 47 Q47 43 54 47" stroke="#7A5500" fill="none" stroke-width="2" stroke-linecap="round"/>
+           <path d="M57 47 Q64 43 71 47" stroke="#7A5500" fill="none" stroke-width="2" stroke-linecap="round"/>`;
+    anim='class="mascot-happy"';
+  }
+  if(mood==='sad'){
+    mouth=`<path d="M45 82 Q55 73 65 82" stroke="#8B3A3A" fill="none" stroke-width="2.5" stroke-linecap="round"/>`;
+    brows=`<path d="M40 52 Q47 47 54 52" stroke="#7A5500" fill="none" stroke-width="2" stroke-linecap="round"/>
+           <path d="M57 52 Q64 47 71 52" stroke="#7A5500" fill="none" stroke-width="2" stroke-linecap="round"/>`;
+    sweat=`<ellipse cx="44" cy="85" rx="2.5" ry="2" fill="#87CEEB" opacity=".7"/>`;
+  }
+  if(mood==='panicking'){
+    arms=`<rect x="5" y="115" width="11" height="42" rx="5" fill="${su}" transform="rotate(-55 11 115)"/>
+          <ellipse cx="6" cy="96" rx="7" ry="7" fill="${sk}"/>
+          <rect x="84" y="115" width="11" height="42" rx="5" fill="${su}" transform="rotate(55 95 115)"/>
+          <ellipse cx="104" cy="96" rx="7" ry="7" fill="${sk}"/>`;
+  }else if(mood==='happy'){
+    arms=`<rect x="8" y="115" width="11" height="40" rx="5" fill="${su}" transform="rotate(-35 14 115)"/>
+          <ellipse cx="11" cy="100" rx="7" ry="7" fill="${sk}"/>
+          <rect x="86" y="115" width="11" height="40" rx="5" fill="${su}" transform="rotate(35 97 115)"/>
+          <ellipse cx="99" cy="100" rx="7" ry="7" fill="${sk}"/>`;
+  }else if(mood==='sad'){
+    arms=`<rect x="14" y="115" width="11" height="42" rx="5" fill="${su}" transform="rotate(12 20 115)"/>
+          <ellipse cx="22" cy="156" rx="7" ry="7" fill="${sk}"/>
+          <rect x="82" y="115" width="11" height="42" rx="5" fill="${su}" transform="rotate(-12 88 115)"/>
+          <ellipse cx="84" cy="156" rx="7" ry="7" fill="${sk}"/>`;
+  }else{
+    arms=`<rect x="9" y="113" width="11" height="43" rx="5" fill="${su}" transform="rotate(-22 15 113)"/>
+          <ellipse cx="5" cy="148" rx="7" ry="7" fill="${sk}"/>
+          <rect x="86" y="113" width="11" height="43" rx="5" fill="${su}" transform="rotate(18 92 113)"/>
+          <ellipse cx="103" cy="148" rx="7" ry="7" fill="${sk}"/>`;
+  }
+  return `<svg viewBox="0 0 110 230" width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" ${anim}>
+    <g fill="${ha}"><ellipse cx="55" cy="35" rx="24" ry="18"/>
+      <polygon points="32,32 25,13 40,28"/><polygon points="42,24 40,6 52,22"/>
+      <polygon points="55,20 57,3 65,20"/><polygon points="67,26 74,8 77,30"/>
+    </g>
+    <ellipse cx="55" cy="56" rx="22" ry="25" fill="${sk}"/>
+    <circle cx="44" cy="53" r="8" fill="white"/><circle cx="44" cy="53" r="4.5" fill="#222"/><circle cx="42" cy="51" r="1.5" fill="white"/>
+    <circle cx="67" cy="53" r="8" fill="white"/><circle cx="67" cy="53" r="4.5" fill="#222"/><circle cx="65" cy="51" r="1.5" fill="white"/>
+    ${brows}${mouth}${sweat}
+    <rect x="48" y="79" width="13" height="14" fill="${sk}"/>
+    <rect x="26" y="91" width="58" height="74" rx="4" fill="${su}"/>
+    <polygon points="55,91 37,79 46,101" fill="${su}"/>
+    <polygon points="55,91 73,79 64,101" fill="${su}"/>
+    <rect x="48" y="91" width="13" height="74" fill="white"/>
+    <polygon points="55,80 51,88 52,118 55,122 58,118 59,88" fill="${ti}" transform="rotate(3 55 100)"/>
+    <circle cx="55" cy="108" r="1.5" fill="#DDD"/><circle cx="55" cy="118" r="1.5" fill="#DDD"/>
+    ${arms}
+    <rect x="33" y="163" width="17" height="58" rx="5" fill="#111A36"/>
+    <rect x="52" y="163" width="17" height="58" rx="5" fill="#111A36"/>
+    <rect x="26" y="160" width="58" height="8" rx="2.5" fill="#8B6914"/>
+    <rect x="50" y="158" width="10" height="12" rx="1.5" fill="#D4AF37"/>
+    <ellipse cx="41" cy="223" rx="13" ry="5.5" fill="#111"/>
+    <ellipse cx="60" cy="223" rx="13" ry="5.5" fill="#111"/>
+  </svg>`;
+}
+
+function todayKey(){const d=new Date();return `triviasprint:lb:${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;}
+async function loadLeaderboard(){try{const r=await window.storage.get(todayKey(),true);if(r)S.leaderboard=JSON.parse(r.value);}catch(e){S.leaderboard=[];}}
+async function saveScore(){let lb=[...S.leaderboard,{name:S.name,score:S.score,survived:S.survived,ts:Date.now()}];lb.sort((a,b)=>b.score-a.score);lb=lb.slice(0,10);S.leaderboard=lb;try{await window.storage.set(todayKey(),JSON.stringify(lb),true);}catch(e){}}
+
+async function fetchQuestions(){
+  S.screen='loading';render();
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,messages:[{role:'user',content:`Generate exactly 20 trivia questions with STRICTLY increasing difficulty. Return ONLY a valid JSON array, no other text or markdown.
+Format: {"category":"Name","question":"Question?","options":["A","B","C","D"],"correctIndex":0,"funFact":"1-2 sentence fun fact.","difficulty":"easy"}
+Difficulty: 1-5 easy, 6-10 medium, 11-15 hard, 16-20 expert. correctIndex is 0-indexed. Vary categories widely. Return ONLY the JSON array.`}]})});
+    const data=await resp.json();
+    let text=data.content[0].text.trim().replace(/```json|```/g,'').trim();
+    const parsed=JSON.parse(text);
+    if(!Array.isArray(parsed)||parsed.length<5)throw new Error('bad');
+    S.questions=parsed;
+  }catch(e){S.questions=FALLBACK;}
+  S.qIndex=0;S.score=0;S.survived=0;S.screen='question';render();startTimer();
+}
+
+function startTimer(){S.timeLeft=10;S.chosen=null;S.isCorrect=null;clearInterval(S.timer);updateTimerBar();S.timer=setInterval(()=>{S.timeLeft--;updateTimerBar();if(S.timeLeft<=0){clearInterval(S.timer);handleTimeout();}},1000);}
+function stopTimer(){clearInterval(S.timer);}
+function updateTimerBar(){
+  const bar=document.getElementById('timer-bar'),num=document.getElementById('timer-num');
+  if(!bar||!num)return;
+  bar.style.width=(S.timeLeft/10*100)+'%';
+  const col=S.timeLeft>6?'#00D4B4':S.timeLeft>3?'#FFD700':'#FF4444';
+  bar.style.background=col;num.textContent=S.timeLeft;num.style.color=col;
+  num.style.animation=S.timeLeft<=3?'timerPulse .35s ease-in-out infinite':'none';
+}
+
+function handleAnswer(idx){
+  if(S.chosen!==null)return;
+  stopTimer();S.chosen=idx;
+  const q=S.questions[S.qIndex];S.isCorrect=(idx===q.correctIndex);
+  const btn=document.querySelector(`.answer-btn[data-idx="${idx}"]`);
+  if(S.isCorrect){S.score+=Math.max(100,S.timeLeft*100);S.survived++;if(btn)btn.classList.add('correct');setTimeout(()=>{S.screen='reveal';render();},500);}
+  else{if(btn)btn.classList.add('wrong');const cb=document.querySelector(`.answer-btn[data-idx="${q.correctIndex}"]`);if(cb)cb.classList.add('reveal-correct');setTimeout(()=>{S.screen='reveal-wrong';render();},600);}
+}
+function handleTimeout(){S.chosen=-1;S.isCorrect=false;const cb=document.querySelector(`.answer-btn[data-idx="${S.questions[S.qIndex].correctIndex}"]`);if(cb)cb.classList.add('reveal-correct');setTimeout(()=>{S.screen='reveal-wrong';render();},500);}
+function nextQuestion(){if(!S.isCorrect){saveScore();S.screen='gameover';render();return;}if(S.qIndex+1>=S.questions.length){saveScore();S.screen='gameover';render();return;}S.qIndex++;S.screen='question';render();startTimer();}
+
+function buildShareText(){const e=['🔥','🔥','🔥','🔥','🔥','💡','💡','💡','💡','💡','🧠','🧠','🧠','🧠','🧠','🏆','🏆','🏆','🏆','🚀'];return `🎯 I survived ${S.survived} questions in Trivia Sprint!\n📊 Score: ${S.score.toLocaleString()} pts\n${e.slice(0,Math.min(S.survived,20)).join('')}\n🕹️ Can you beat me? Play at: ${GAME_URL}`;}
+async function copyShareText(){try{await navigator.clipboard.writeText(buildShareText());const b=document.getElementById('share-btn');if(b){b.textContent='✓ Copied!';setTimeout(()=>{if(b)b.textContent='📋 Copy share text';},2000);}}catch(e){}}
+
+function diffPips(d){const m={easy:1,medium:2,hard:3,expert:4};const n=m[d]||1;let h='<div class="difficulty-pip">';for(let i=1;i<=4;i++){let c='pip';if(i<=n){c+=' active';if(d==='medium')c+=' med';if(d==='hard')c+=' hard';if(d==='expert')c+=' exp';}h+=`<div class="${c}"></div>`;}return h+'</div>';}
+function rankIcon(i){if(i===0)return '<span class="lb-rank gold">🥇</span>';if(i===1)return '<span class="lb-rank silver">🥈</span>';if(i===2)return '<span class="lb-rank bronze">🥉</span>';return `<span class="lb-rank other">${i+1}</span>`;}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function renderWelcome(){
+  const lb=S.leaderboard.slice(0,3);
+  const today=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  return `<div class="welcome-wrap screen-enter">
+    <div class="welcome-top">
+      <h1 class="game-title">TRIVIA<br><span>SPRINT</span></h1>
+      <p class="subtitle">How far can you go before you crack?</p>
+    </div>
+    <div class="mascot-sm">${getMascot('idle',95,190)}</div>
+    <div>
+      <div class="card">
+        <input class="name-input" id="name-input" type="text" placeholder="Your name…" maxlength="24" autocomplete="off" onkeydown="if(event.key==='Enter')startGame()"/>
+        <div style="height:9px;"></div>
+        <button class="btn btn-primary" onclick="startGame()">🚀 Start Sprinting</button>
+        <hr class="divider">
+        <div class="rules-row">
+          <div><div class="rule-icon">⚡</div><div class="rule-label">10 sec timer</div></div>
+          <div><div class="rule-icon">📈</div><div class="rule-label">Gets harder</div></div>
+          <div><div class="rule-icon">💀</div><div class="rule-label">1 wrong = out</div></div>
+        </div>
+      </div>
+      ${lb.length>0?`<div class="card" style="margin-top:7px;">
+        <div class="lb-title-row"><span class="lb-title">🏅 Today's Best</span><span class="lb-date">${today}</span></div>
+        ${lb.map((e,i)=>`<div class="lb-row">${rankIcon(i)}<span class="lb-name">${esc(e.name||'Anon')}</span><span class="lb-score">${(e.score||0).toLocaleString()}</span><span class="lb-qs">${e.survived||0}Q</span></div>`).join('')}
+      </div>`:''}
+    </div>
+  </div>`;
+}
+
+function renderLoading(){
+  return `<div class="loading-wrap screen-enter">
+    <div style="text-align:center;">
+      <div style="font-family:'Boogaloo',cursive;font-size:1.7rem;color:var(--yellow);">Loading Questions…</div>
+      <div style="font-size:.8rem;color:var(--muted);font-weight:600;margin-top:3px;">Brewing up something diabolical</div>
+    </div>
+    ${getMascot('stressed',105,210)}
+    <div class="loading-dots"><span></span><span></span><span></span></div>
+  </div>`;
+}
+
+function renderQuestion(){
+  const q=S.questions[S.qIndex];if(!q)return'';
+  const total=S.questions.length;
+  return `<div class="q-screen screen-enter">
+    <div class="hud">
+      <div class="hud-item"><div class="hud-label">Score</div><div class="hud-value">${S.score.toLocaleString()}</div></div>
+      <div class="timer-pill">
+        <span id="timer-num" class="timer-num" style="color:var(--teal);">10</span>
+        <div class="timer-bar-wrap"><div class="timer-bar" id="timer-bar" style="width:100%;background:var(--teal);"></div></div>
+      </div>
+      <div class="hud-item"><div class="hud-label">Q</div><div class="hud-value">${S.qIndex+1}/${total}</div></div>
+    </div>
+    <div class="card q-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:3px;">
+        <span class="category-badge">📂 ${q.category||'General'}</span>
+        ${diffPips(q.difficulty||'easy')}
+      </div>
+      <p class="q-text">${q.question}</p>
+      <div class="answer-grid">
+        ${(q.options||[]).map((o,i)=>`
+          <button class="answer-btn" data-idx="${i}" onclick="handleAnswer(${i})">
+            <span class="answer-label">${['A','B','C','D'][i]}</span>
+            <span>${o}</span>
+          </button>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderReveal(won){
+  const q=S.questions[S.qIndex];const pts=won?Math.max(100,S.timeLeft*100):0;
+  return `<div class="reveal-wrap screen-enter">
+    <div>
+      <div class="mascot-sm">${getMascot(won?'happy':'sad',85,170)}</div>
+      <div class="reveal-title" style="color:${won?'var(--green)':'var(--red)'};">${won?'✓ Correct!':S.chosen===-1?'⏰ Time\'s Up!':'✗ Wrong!'}</div>
+      <div class="reveal-pts">${won?'+'+pts.toLocaleString()+' pts':'Streak ended at '+S.survived}</div>
+    </div>
+    <div class="reveal-answer-box">
+      <div class="reveal-answer-label">Correct Answer</div>
+      <div class="reveal-answer-text">${q.options[q.correctIndex]}</div>
+    </div>
+    <div class="fun-fact-box">
+      <div class="fun-fact-label">💡 Fun Fact</div>
+      <p class="fun-fact-text">${q.funFact||''}</p>
+    </div>
+    <button class="btn ${won?'btn-primary':'btn-danger'}" onclick="nextQuestion()">${won?'Next Question ➜':'See My Results ➜'}</button>
+  </div>`;
+}
+
+function renderGameover(){
+  const fire='🔥'.repeat(Math.min(S.survived,10));
+  const today=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  return `<div class="gameover-wrap screen-enter">
+    <div style="text-align:center;">
+      <div class="mascot-sm">${getMascot(S.survived>12?'happy':S.survived>4?'idle':'sad',80,160)}</div>
+      <div class="go-label">${S.survived>=S.questions.length?'🏆 PERFECT RUN!':'GAME OVER'}</div>
+      <div class="go-score">${S.survived}</div>
+      <div class="go-qs">questions survived</div>
+      <div class="go-pts">${S.score.toLocaleString()} pts</div>
+      <div class="go-emojis">${fire||'😅'}</div>
+    </div>
+    <div class="card">
+      <div style="font-size:.67rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;">📤 Share Your Result</div>
+      <div class="share-box" onclick="copyShareText()"><strong>Tap to copy</strong>${buildShareText().replace(/\n/g,'<br>')}</div>
+      <div style="height:6px;"></div>
+      <button id="share-btn" class="btn btn-ghost" onclick="copyShareText()">📋 Copy share text</button>
+    </div>
+    ${S.leaderboard.length>0?`<div class="card">
+      <div class="lb-title-row"><span class="lb-title">🏅 Leaderboard</span><span class="lb-date">${today}</span></div>
+      ${S.leaderboard.map((e,i)=>`<div class="lb-row">${rankIcon(i)}<span class="lb-name">${esc(e.name||'Anon')}</span><span class="lb-score">${(e.score||0).toLocaleString()}</span><span class="lb-qs">${e.survived||0}Q</span></div>`).join('')}
+    </div>`:''}
+    <button class="btn btn-primary" onclick="restartGame()">🔄 Play Again</button>
+  </div>`;
+}
+
+function render(){
+  const screens={welcome:renderWelcome,loading:renderLoading,question:renderQuestion,reveal:()=>renderReveal(true),'reveal-wrong':()=>renderReveal(false),gameover:renderGameover};
+  document.getElementById('app').innerHTML=(screens[S.screen]||renderWelcome)();
+  if(S.screen==='question')updateTimerBar();
+}
+
+function startGame(){const inp=document.getElementById('name-input');const n=(inp?inp.value.trim():'')||'Anonymous';if(inp&&!inp.value.trim()){inp.focus();return;}S.name=n;fetchQuestions();}
+function restartGame(){stopTimer();Object.assign(S,{qIndex:0,score:0,survived:0,chosen:null,isCorrect:null,screen:'welcome'});render();}
+
+loadLeaderboard().then(render);
+</script>
+</body>
+</html>
