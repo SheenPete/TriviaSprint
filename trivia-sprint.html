@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trivia Sprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --yellow:#FFD700;--coral:#FF6B4A;--teal:#00D4B4;--navy:#0D0E21;--card:#171830;
+  --green:#2ECC71;--red:#E74C3C;--blue:#4A90E2;--purple:#9B59B6;
+  --text:#F0F0FF;--muted:#8A8AB0;
+}
+body{
+  font-family:'Nunito',sans-serif;
+  background:var(--navy);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse at 20% 20%,rgba(255,215,0,.07),transparent 50%),
+             radial-gradient(ellipse at 80% 80%,rgba(0,212,180,.07),transparent 50%);
+  pointer-events:none;
+}
+#app{width:100%;max-width:680px;padding:20px;position:relative;}
+
+/* ===== TYPOGRAPHY ===== */
+.title-font{font-family:'Boogaloo',cursive;}
+h1.game-title{
+  font-family:'Boogaloo',cursive;
+  font-size:clamp(2.8rem,8vw,4.5rem);
+  letter-spacing:2px;
+  background:linear-gradient(135deg,var(--yellow),var(--coral));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  text-shadow:none;
+  line-height:1;
+}
+h1.game-title span{-webkit-text-fill-color:var(--teal);}
+
+/* ===== CARDS ===== */
+.card{
+  background:var(--card);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:20px;
+  padding:32px;
+  position:relative;
+  overflow:hidden;
+}
+.card::before{
+  content:'';position:absolute;inset:0;border-radius:20px;
+  background:linear-gradient(135deg,rgba(255,215,0,.03),transparent);
+  pointer-events:none;
+}
+
+/* ===== BUTTONS ===== */
+.btn{
+  font-family:'Nunito',sans-serif;font-weight:800;font-size:1.1rem;
+  padding:14px 32px;border-radius:50px;border:none;cursor:pointer;
+  transition:all .2s;display:inline-flex;align-items:center;gap:10px;
+}
+.btn-primary{
+  background:linear-gradient(135deg,var(--yellow),#FFA500);
+  color:#111;box-shadow:0 4px 20px rgba(255,215,0,.3);
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(255,215,0,.4);}
+.btn-primary:active{transform:translateY(0);}
+.btn-ghost{
+  background:transparent;color:var(--text);
+  border:2px solid rgba(255,255,255,.2);
+}
+.btn-ghost:hover{border-color:var(--yellow);color:var(--yellow);}
+
+/* ===== INPUT ===== */
+.name-input{
+  width:100%;padding:16px 24px;
+  background:rgba(255,255,255,.06);
+  border:2px solid rgba(255,255,255,.15);
+  border-radius:50px;color:var(--text);
+  font-family:'Nunito',sans-serif;font-size:1.2rem;font-weight:700;
+  text-align:center;outline:none;
+  transition:border-color .2s;
+}
+.name-input:focus{border-color:var(--yellow);}
+.name-input::placeholder{color:var(--muted);}
+
+/* ===== ANSWER BUTTONS ===== */
+.answer-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;}
+.answer-btn{
+  background:rgba(255,255,255,.05);
+  border:2px solid rgba(255,255,255,.12);
+  border-radius:14px;color:var(--text);
+  font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;
+  padding:18px 16px;cursor:pointer;text-align:left;
+  transition:all .2s;display:flex;align-items:center;gap:10px;
+  line-height:1.3;
+}
+.answer-btn:hover:not(:disabled){
+  background:rgba(255,215,0,.08);
+  border-color:var(--yellow);transform:translateY(-1px);
+}
+.answer-btn:disabled{cursor:default;}
+.answer-btn.correct{
+  background:rgba(46,204,113,.15);border-color:var(--green);
+  animation:correctPulse .5s ease;
+}
+.answer-btn.wrong{
+  background:rgba(231,76,60,.15);border-color:var(--red);
+  animation:wrongShake .4s ease;
+}
+.answer-btn.reveal-correct{background:rgba(46,204,113,.15);border-color:var(--green);}
+.answer-label{
+  width:28px;height:28px;border-radius:8px;
+  background:rgba(255,255,255,.1);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.85rem;flex-shrink:0;font-weight:900;
+}
+
+/* ===== TIMER ===== */
+.timer-bar-wrap{
+  background:rgba(255,255,255,.08);border-radius:50px;
+  height:10px;overflow:hidden;margin:16px 0 8px;
+}
+.timer-bar{
+  height:100%;border-radius:50px;
+  transition:width 1s linear, background .5s;
+}
+.timer-text{
+  font-family:'Boogaloo',cursive;font-size:2rem;
+  text-align:right;
+}
+
+/* ===== SCORE HUD ===== */
+.hud{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:20px;
+}
+.hud-item{text-align:center;}
+.hud-label{font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+.hud-value{font-family:'Boogaloo',cursive;font-size:1.8rem;color:var(--yellow);}
+.streak-badge{
+  background:linear-gradient(135deg,var(--coral),#FF3E3E);
+  border-radius:10px;padding:4px 10px;
+  font-size:.8rem;font-weight:900;display:inline-block;
+  animation:streakPulse 1s ease infinite;
+}
+
+/* ===== CATEGORY BADGE ===== */
+.category-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.3);
+  border-radius:50px;padding:6px 16px;
+  font-size:.8rem;font-weight:800;color:var(--yellow);letter-spacing:.5px;
+  text-transform:uppercase;margin-bottom:16px;
+}
+
+/* ===== QUESTION ===== */
+.question-number{font-size:.85rem;font-weight:700;color:var(--muted);margin-bottom:8px;}
+.question-text{
+  font-size:1.25rem;font-weight:700;line-height:1.5;
+  margin-bottom:4px;
+}
+.difficulty-pip{
+  display:inline-flex;gap:4px;margin-bottom:16px;
+}
+.pip{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.15);}
+.pip.active{background:var(--yellow);}
+.pip.active.med{background:var(--coral);}
+.pip.active.hard{background:var(--red);}
+.pip.active.exp{background:var(--purple);}
+
+/* ===== FUN FACT ===== */
+.fun-fact-box{
+  background:rgba(0,212,180,.08);border:1px solid rgba(0,212,180,.25);
+  border-radius:14px;padding:16px 20px;margin-top:20px;
+}
+.fun-fact-label{
+  font-size:.75rem;font-weight:800;color:var(--teal);
+  text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;
+  display:flex;align-items:center;gap:6px;
+}
+.fun-fact-text{font-size:.95rem;color:rgba(240,240,255,.85);line-height:1.5;}
+
+/* ===== MASCOT ===== */
+.mascot-wrap{display:flex;justify-content:center;margin:16px 0;}
+.mascot-wrap svg{filter:drop-shadow(0 8px 20px rgba(0,0,0,.4));}
+
+/* ===== LEADERBOARD ===== */
+.lb-row{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px;border-radius:12px;
+  background:rgba(255,255,255,.04);margin-bottom:8px;
+  transition:background .2s;
+}
+.lb-row:hover{background:rgba(255,255,255,.07);}
+.lb-rank{
+  font-family:'Boogaloo',cursive;font-size:1.4rem;
+  width:36px;text-align:center;flex-shrink:0;
+}
+.lb-rank.gold{color:var(--yellow);}
+.lb-rank.silver{color:#C0C0C0;}
+.lb-rank.bronze{color:#CD7F32;}
+.lb-rank.other{color:var(--muted);}
+.lb-name{flex:1;font-weight:700;font-size:1rem;}
+.lb-score{font-family:'Boogaloo',cursive;font-size:1.3rem;color:var(--yellow);}
+.lb-qs{font-size:.8rem;color:var(--muted);margin-left:4px;}
+
+/* ===== RESULT ===== */
+.result-score{
+  font-family:'Boogaloo',cursive;
+  font-size:clamp(3rem,10vw,5rem);
+  color:var(--yellow);
+  text-shadow:0 0 40px rgba(255,215,0,.3);
+  line-height:1;
+}
+.result-pts{font-family:'Boogaloo',cursive;font-size:1.5rem;color:var(--muted);}
+.share-box{
+  background:rgba(255,255,255,.04);
+  border:1px dashed rgba(255,255,255,.2);
+  border-radius:12px;padding:14px 18px;
+  font-size:.9rem;color:var(--muted);line-height:1.6;
+  cursor:pointer;transition:background .2s;margin-top:12px;
+}
+.share-box:hover{background:rgba(255,255,255,.07);}
+.share-box strong{color:var(--text);display:block;margin-bottom:4px;font-size:.8rem;text-transform:uppercase;letter-spacing:1px;}
+
+/* ===== LOADING ===== */
+.loading-dots span{
+  display:inline-block;width:10px;height:10px;border-radius:50%;
+  background:var(--yellow);margin:0 4px;
+  animation:bounce .8s ease infinite;
+}
+.loading-dots span:nth-child(2){animation-delay:.15s;}
+.loading-dots span:nth-child(3){animation-delay:.3s;}
+
+/* ===== DIVIDER ===== */
+.divider{border:none;border-top:1px solid rgba(255,255,255,.08);margin:24px 0;}
+
+/* ===== ANIMATIONS ===== */
+@keyframes correctPulse{0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
+@keyframes wrongShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+@keyframes streakPulse{0%,100%{opacity:1}50%{opacity:.7}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes mascotBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes mascotShake{0%,100%{transform:rotate(0)}25%{transform:rotate(-4deg)}75%{transform:rotate(4deg)}}
+@keyframes mascotJump{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-15px) scale(1.05)}}
+@keyframes sweatDrop{0%{opacity:0;transform:translateY(-5px)}50%{opacity:.9}100%{opacity:0;transform:translateY(15px)}}
+@keyframes timerPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+@keyframes shine{0%{background-position:-200% center}100%{background-position:200% center}}
+
+.screen-enter{animation:fadeSlideIn .4s ease both;}
+.mascot-idle{animation:mascotBob 2.5s ease-in-out infinite;}
+.mascot-stressed{animation:mascotShake .5s ease-in-out infinite;}
+.mascot-happy{animation:mascotJump .6s ease-in-out;}
+.mascot-panicking{animation:mascotShake .25s ease-in-out infinite;}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:500px){
+  .answer-grid{grid-template-columns:1fr;}
+  .card{padding:20px;}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ============================
+// STATE
+// ============================
+const S = {
+  screen:'welcome', name:'', questions:[], qIndex:0,
+  score:0, timeLeft:10, chosen:null, isCorrect:null,
+  leaderboard:[], timer:null, survived:0, loadErr:false
+};
+
+const GAME_URL = 'https://claude.ai/public/artifacts/trivia-sprint';
+
+// ============================
+// FALLBACK QUESTIONS
+// ============================
+const FALLBACK = [
+  {category:'Pop Culture',question:'Which Disney film features a lion named Simba?',options:['The Lion King','Jungle Book','Bambi','Tarzan'],correctIndex:0,funFact:"The Lion King (1994) is loosely based on Shakespeare's Hamlet and was Disney's highest-grossing hand-drawn animated film for over two decades.",difficulty:'easy'},
+  {category:'Science',question:'What is the chemical symbol for gold?',options:['Go','Gd','Au','Ag'],correctIndex:2,funFact:"Au comes from the Latin word 'aurum'. Gold has been used by humans for over 6,000 years and is one of the few metals found in a pure state in nature.",difficulty:'easy'},
+  {category:'Geography',question:'What is the capital city of Australia?',options:['Sydney','Melbourne','Brisbane','Canberra'],correctIndex:3,funFact:"Canberra was purpose-built as a compromise after Sydney and Melbourne both wanted to be the capital. It was officially founded in 1913.",difficulty:'easy'},
+  {category:'History',question:"Who was the first President of the United States?",options:['John Adams','Benjamin Franklin','George Washington','Thomas Jefferson'],correctIndex:2,funFact:"George Washington was unanimously elected by the Electoral College — the only president to have received 100% of electoral votes.",difficulty:'easy'},
+  {category:'Sports',question:'In which sport would you perform a "slam dunk"?',options:['Volleyball','Basketball','Tennis','Baseball'],correctIndex:1,funFact:"The slam dunk was officially banned in college basketball from 1967 to 1976 — primarily because Kareem Abdul-Jabbar (then Lew Alcindor) was so dominant at it.",difficulty:'easy'},
+  {category:'Science',question:'How many bones are in the adult human body?',options:['186','206','226','246'],correctIndex:1,funFact:"Babies are born with around 270–300 bones. As they grow, many bones fuse together, leaving adults with exactly 206 bones.",difficulty:'medium'},
+  {category:'History',question:'In what year did World War II end?',options:['1943','1944','1945','1946'],correctIndex:2,funFact:"WWII officially ended on September 2, 1945, when Japan signed the surrender documents aboard USS Missouri — 2,194 days after Germany invaded Poland.",difficulty:'medium'},
+  {category:'Technology',question:'What does "HTTP" stand for?',options:['HyperText Transfer Protocol','High Traffic Transfer Program','Hyper Tech Transmission Protocol','HyperText Transmission Process'],correctIndex:0,funFact:"HTTP was invented by Tim Berners-Lee in 1989. The secure version HTTPS encrypts data and is now used by over 80% of websites.",difficulty:'medium'},
+  {category:'Geography',question:'Which country has the most natural lakes in the world?',options:['Russia','USA','Brazil','Canada'],correctIndex:3,funFact:"Canada has over 879,000 lakes — that's more than all other countries combined, containing roughly 20% of the world's fresh surface water.",difficulty:'medium'},
+  {category:'Science',question:'What planet has the most moons in our solar system?',options:['Jupiter','Saturn','Uranus','Neptune'],correctIndex:1,funFact:"Saturn overtook Jupiter in 2023 with the discovery of 62 new moons, bringing its total to 146 — the most of any planet in the solar system.",difficulty:'medium'},
+  {category:'Literature',question:'Who wrote the novel "1984"?',options:['Aldous Huxley','Ray Bradbury','George Orwell','H.G. Wells'],correctIndex:2,funFact:"George Orwell wrote 1984 while seriously ill with tuberculosis on the remote Scottish island of Jura. He died just seven months after its publication in 1949.",difficulty:'hard'},
+  {category:'Science',question:'What is the hardest natural substance on Earth?',options:['Titanium','Quartz','Sapphire','Diamond'],correctIndex:3,funFact:"Diamond scores 10 on the Mohs hardness scale. The only thing that can scratch a diamond is another diamond — used in industrial cutting, drilling, and polishing worldwide.",difficulty:'hard'},
+  {category:'History',question:'Which ancient wonder of the world was located in Alexandria, Egypt?',options:['Colossus of Rhodes','Temple of Artemis','Lighthouse of Alexandria','Statue of Zeus'],correctIndex:2,funFact:"The Lighthouse of Alexandria stood approximately 100–140 meters tall and is considered one of the tallest man-made structures for many centuries. It was destroyed by earthquakes between 956 and 1323 AD.",difficulty:'hard'},
+  {category:'Music',question:"Freddie Mercury was the lead singer of which legendary band?",options:['Led Zeppelin','The Rolling Stones','Queen','Aerosmith'],correctIndex:2,funFact:"Freddie Mercury wrote Bohemian Rhapsody in just one night. Researchers have found he could produce notes between 92.2 Hz and 784 Hz — and his vibrato was unusually fast at around 7.5 Hz.",difficulty:'hard'},
+  {category:'Science',question:'What is the name of the process by which plants make food using sunlight?',options:['Respiration','Photosynthesis','Transpiration','Osmosis'],correctIndex:1,funFact:"Photosynthesis produces approximately 115 billion metric tons of dry organic matter per year. It's the basis for almost all food webs on Earth and the primary source of atmospheric oxygen.",difficulty:'hard'},
+  {category:'Astronomy',question:'What is the Chandrasekhar limit?',options:['Max speed of a white dwarf','Mass threshold for neutron star collapse','Minimum star mass for fusion','Max white dwarf mass before collapse'],correctIndex:3,funFact:"The Chandrasekhar limit is about 1.4 solar masses. Above this, a white dwarf collapses into a neutron star or black hole — this discovery earned Subrahmanyan Chandrasekhar the 1983 Nobel Prize.",difficulty:'expert'},
+  {category:'Biology',question:"What is the world's smallest flowering plant?",options:['Wolffia globosa','Lemna minor','Azolla caroliniana','Spirodela polyrhiza'],correctIndex:0,funFact:"Wolffia globosa (Asian watermeal) is about the size of a grain of rice — roughly 0.1–0.2mm. Despite its size, it's actually edible and has been consumed in Southeast Asia for centuries.",difficulty:'expert'},
+  {category:'History',question:'Which treaty ended the Thirty Years War in 1648?',options:['Treaty of Utrecht','Peace of Westphalia','Treaty of Augsburg','Peace of Prague'],correctIndex:1,funFact:"The Peace of Westphalia is considered a foundational moment for the modern concept of state sovereignty and the nation-state system that still governs international relations today.",difficulty:'expert'},
+  {category:'Mathematics',question:"What is Euler's identity often called?",options:["The most beautiful equation","The fundamental theorem","Gödel's theorem","Fermat's last conjecture"],correctIndex:0,funFact:"Euler's identity (e^iπ + 1 = 0) connects five fundamental mathematical constants. Richard Feynman called it 'our jewel' and 'the most remarkable formula in mathematics'.",difficulty:'expert'},
+  {category:'Physics',question:'What subatomic particle was discovered in 2012 at CERN?',options:['Graviton','Dark matter particle','Higgs boson','Tachyon'],correctIndex:2,funFact:"The Higgs boson — nicknamed the 'God Particle' — gives other particles their mass. Its discovery confirmed the final missing piece of the Standard Model of physics after a 48-year search.",difficulty:'expert'},
+];
+
+// ============================
+// MASCOT SVG
+// ============================
+function getMascot(mood){
+  // mood: idle|stressed|panicking|happy|sad
+  const skinColor = '#F5C5A3';
+  const suitColor = '#1E2B5A';
+  const hairColor = '#F5D020';
+  const tieColor = '#CC2200';
+
+  let sweat = '';
+  let mouthPath = '';
+  let eyeScale = 1;
+  let armsHTML = '';
+  let brows = '';
+  let extraAnim = '';
+
+  if(mood==='panicking'||mood==='stressed'){
+    sweat = `
+      <ellipse cx="28" cy="75" rx="4" ry="6" fill="#87CEEB" opacity="0.9"/>
+      <ellipse cx="112" cy="85" rx="3" ry="5" fill="#87CEEB" opacity="0.8"/>
+      <ellipse cx="22" cy="90" rx="2" ry="3" fill="#87CEEB" opacity="0.6"/>`;
+  }
+  if(mood==='panicking'){
+    sweat += `<ellipse cx="115" cy="65" rx="3" ry="5" fill="#87CEEB" opacity="0.9"/>`;
+    eyeScale = 1.15;
+    extraAnim = `class="mascot-panicking"`;
+  }
+
+  if(mood==='idle'||mood==='stressed'||mood==='panicking'){
+    mouthPath = `<ellipse cx="70" cy="100" rx="10" ry="7" fill="#8B3A3A"/>
+      <ellipse cx="70" cy="97" rx="7" ry="4" fill="${skinColor}"/>`;
+    brows = `
+      <path d="M52 65 Q59 60 66 65" stroke="#7A5500" fill="none" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M74 65 Q81 60 88 65" stroke="#7A5500" fill="none" stroke-width="2.5" stroke-linecap="round"/>`;
+  }
+  if(mood==='happy'){
+    mouthPath = `<path d="M58 97 Q70 112 82 97" stroke="#8B3A3A" fill="none" stroke-width="3" stroke-linecap="round"/>`;
+    brows = `
+      <path d="M52 62 Q59 58 66 62" stroke="#7A5500" fill="none" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M74 62 Q81 58 88 62" stroke="#7A5500" fill="none" stroke-width="2.5" stroke-linecap="round"/>`;
+    extraAnim = `class="mascot-happy"`;
+  }
+  if(mood==='sad'){
+    mouthPath = `<path d="M58 104 Q70 95 82 104" stroke="#8B3A3A" fill="none" stroke-width="3" stroke-linecap="round"/>`;
+    brows = `
+      <path d="M52 68 Q59 63 66 68" stroke="#7A5500" fill="none" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M74 68 Q81 63 88 68" stroke="#7A5500" fill="none" stroke-width="2.5" stroke-linecap="round"/>`;
+    sweat = `<ellipse cx="60" cy="110" rx="3" ry="2" fill="#87CEEB" opacity="0.7"/>
+      <ellipse cx="80" cy="108" rx="2" ry="2" fill="#87CEEB" opacity="0.6"/>`;
+  }
+
+  // Arms vary by mood
+  if(mood==='panicking'){
+    armsHTML = `
+      <rect x="8" y="155" width="14" height="55" rx="7" fill="${suitColor}" transform="rotate(-60 15 155)"/>
+      <ellipse cx="9" cy="124" rx="9" ry="9" fill="${skinColor}"/>
+      <rect x="108" y="155" width="14" height="55" rx="7" fill="${suitColor}" transform="rotate(60 122 155)"/>
+      <ellipse cx="131" cy="124" rx="9" ry="9" fill="${skinColor}"/>`;
+  } else if(mood==='happy'){
+    armsHTML = `
+      <rect x="10" y="155" width="14" height="50" rx="7" fill="${suitColor}" transform="rotate(-40 17 155)"/>
+      <ellipse cx="15" cy="130" rx="9" ry="9" fill="${skinColor}"/>
+      <rect x="110" y="155" width="14" height="50" rx="7" fill="${suitColor}" transform="rotate(40 124 155)"/>
+      <ellipse cx="125" cy="130" rx="9" ry="9" fill="${skinColor}"/>`;
+  } else if(mood==='sad'){
+    armsHTML = `
+      <rect x="18" y="155" width="14" height="52" rx="7" fill="${suitColor}" transform="rotate(15 25 155)"/>
+      <ellipse cx="30" cy="205" rx="9" ry="9" fill="${skinColor}"/>
+      <rect x="108" y="155" width="14" height="52" rx="7" fill="${suitColor}" transform="rotate(-15 115 155)"/>
+      <ellipse cx="110" cy="205" rx="9" ry="9" fill="${skinColor}"/>`;
+  } else {
+    // idle/stressed: one arm up slightly, one reaching
+    armsHTML = `
+      <rect x="12" y="148" width="14" height="55" rx="7" fill="${suitColor}" transform="rotate(-25 19 148)"/>
+      <ellipse cx="8" cy="192" rx="9" ry="9" fill="${skinColor}"/>
+      <rect x="110" y="148" width="14" height="55" rx="7" fill="${suitColor}" transform="rotate(20 117 148)"/>
+      <ellipse cx="128" cy="192" rx="9" ry="9" fill="${skinColor}"/>`;
+  }
+
+  const idleClass = (mood==='idle'||mood==='stressed')?'class="mascot-idle"':'';
+  const finalAnim = extraAnim || idleClass;
+
+  return `<svg viewBox="0 0 140 310" width="130" height="260" xmlns="http://www.w3.org/2000/svg" ${finalAnim}>
+    <!-- Hair spikes -->
+    <g fill="${hairColor}">
+      <ellipse cx="70" cy="48" rx="30" ry="24"/>
+      <polygon points="40,42 33,18 50,38"/>
+      <polygon points="52,32 50,8 63,30"/>
+      <polygon points="70,28 72,4 82,28"/>
+      <polygon points="85,33 92,10 96,38"/>
+    </g>
+    <!-- Head -->
+    <ellipse cx="70" cy="78" rx="28" ry="32" fill="${skinColor}"/>
+    <!-- Eyes -->
+    <g transform="scale(${eyeScale}) translate(${eyeScale===1?0:(70*(1-1/eyeScale))},${eyeScale===1?0:(78*(1-1/eyeScale))})">
+      <circle cx="57" cy="74" r="10" fill="white"/>
+      <circle cx="57" cy="74" r="6" fill="#222"/>
+      <circle cx="54" cy="71" r="2" fill="white"/>
+      <circle cx="83" cy="74" r="10" fill="white"/>
+      <circle cx="83" cy="74" r="6" fill="#222"/>
+      <circle cx="80" cy="71" r="2" fill="white"/>
+    </g>
+    ${brows}
+    ${mouthPath}
+    ${sweat}
+    <!-- Neck -->
+    <rect x="62" y="107" width="16" height="18" fill="${skinColor}"/>
+    <!-- Suit body -->
+    <rect x="32" y="122" width="76" height="95" rx="5" fill="${suitColor}"/>
+    <!-- Left lapel -->
+    <polygon points="70,122 47,107 58,132" fill="${suitColor}"/>
+    <!-- Right lapel -->
+    <polygon points="70,122 93,107 82,132" fill="${suitColor}"/>
+    <!-- White shirt front -->
+    <rect x="62" y="122" width="16" height="95" fill="white"/>
+    <!-- Tie (slightly crooked) -->
+    <polygon points="70,108 65,118 67,158 70,163 73,158 75,118" fill="${tieColor}" transform="rotate(3 70 135)"/>
+    <!-- Buttons -->
+    <circle cx="70" cy="142" r="2" fill="#DDD"/>
+    <circle cx="70" cy="156" r="2" fill="#DDD"/>
+    ${armsHTML}
+    <!-- Pants -->
+    <rect x="43" y="215" width="22" height="78" rx="6" fill="#111A36"/>
+    <rect x="67" y="215" width="22" height="78" rx="6" fill="#111A36"/>
+    <!-- Belt -->
+    <rect x="33" y="213" width="74" height="10" rx="3" fill="#8B6914"/>
+    <rect x="64" y="211" width="12" height="14" rx="2" fill="#D4AF37"/>
+    <!-- Shoes -->
+    <ellipse cx="54" cy="297" rx="16" ry="7" fill="#111"/>
+    <ellipse cx="78" cy="297" rx="16" ry="7" fill="#111"/>
+  </svg>`;
+}
+
+// ============================
+// LEADERBOARD
+// ============================
+function todayKey(){
+  const d = new Date();
+  return `triviasprint:lb:${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+async function loadLeaderboard(){
+  try{
+    const res = await window.storage.get(todayKey(),true);
+    if(res) S.leaderboard = JSON.parse(res.value);
+  }catch(e){S.leaderboard=[];}
+}
+async function saveScore(){
+  const entry = {name:S.name,score:S.score,survived:S.survived,ts:Date.now()};
+  let lb = [...S.leaderboard, entry];
+  lb.sort((a,b)=>b.score-a.score);
+  lb = lb.slice(0,10);
+  S.leaderboard = lb;
+  try{ await window.storage.set(todayKey(),JSON.stringify(lb),true); }catch(e){}
+}
+
+// ============================
+// API - FETCH QUESTIONS
+// ============================
+async function fetchQuestions(){
+  S.screen = 'loading'; render();
+  try{
+    const resp = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:4000,
+        messages:[{role:'user',content:`Generate exactly 20 trivia questions with STRICTLY increasing difficulty for a fast-paced trivia game. Return ONLY a valid JSON array with no other text, preamble, or markdown code fences.
+
+Each question must follow this EXACT format:
+{"category":"Category Name","question":"The question text?","options":["Option A","Option B","Option C","Option D"],"correctIndex":0,"funFact":"An interesting 1-2 sentence fun fact about the answer.","difficulty":"easy"}
+
+Difficulty distribution (vary the exact wording - use "easy","medium","hard","expert"):
+- Questions 1-5: easy (widely known pop culture, basic science, famous landmarks)
+- Questions 6-10: medium (history, sports records, geography, general science)
+- Questions 11-15: hard (specific dates, science facts, literature, niche sports)
+- Questions 16-20: expert (highly specific, obscure history, advanced science, unusual facts)
+
+Rules:
+- correctIndex must point to the ACTUAL correct answer in options array (0-indexed)
+- Make incorrect options plausible but clearly wrong to someone who knows the answer
+- Keep questions unambiguous with a single correct answer
+- Fun facts should be genuinely interesting and educational
+- Vary categories widely (science, history, geography, sports, literature, technology, music, art, food, nature)
+
+Return ONLY the JSON array.`}]
+      })
+    });
+    const data = await resp.json();
+    let text = data.content[0].text.trim();
+    text = text.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(text);
+    if(!Array.isArray(parsed)||parsed.length<5) throw new Error('bad response');
+    S.questions = parsed;
+  }catch(e){
+    S.questions = FALLBACK;
+  }
+  S.qIndex = 0; S.score = 0; S.survived = 0; S.screen='question';
+  render(); startTimer();
+}
+
+// ============================
+// TIMER
+// ============================
+function startTimer(){
+  S.timeLeft = 10; S.chosen = null; S.isCorrect = null;
+  clearInterval(S.timer);
+  updateTimerBar();
+  S.timer = setInterval(()=>{
+    S.timeLeft--;
+    updateTimerBar();
+    if(S.timeLeft<=0){
+      clearInterval(S.timer);
+      handleTimeout();
+    }
+  },1000);
+}
+function stopTimer(){clearInterval(S.timer);}
+
+function updateTimerBar(){
+  const bar = document.getElementById('timer-bar');
+  const txt = document.getElementById('timer-text');
+  if(!bar||!txt) return;
+  const pct = (S.timeLeft/10)*100;
+  bar.style.width = pct+'%';
+  bar.style.background = S.timeLeft>6?'#00D4B4':S.timeLeft>3?'#FFD700':'#FF4444';
+  txt.textContent = S.timeLeft;
+  txt.style.color = S.timeLeft>6?'var(--teal)':S.timeLeft>3?'var(--yellow)':'var(--coral)';
+  if(S.timeLeft<=3) txt.style.animation='timerPulse .4s ease-in-out infinite';
+  else txt.style.animation='none';
+}
+
+// ============================
+// GAME LOGIC
+// ============================
+function handleAnswer(idx){
+  if(S.chosen!==null) return;
+  stopTimer();
+  S.chosen = idx;
+  const q = S.questions[S.qIndex];
+  S.isCorrect = (idx === q.correctIndex);
+  if(S.isCorrect){
+    const pts = Math.max(100, S.timeLeft*100);
+    S.score += pts;
+    S.survived++;
+    // Animate button
+    const btn = document.querySelector(`.answer-btn[data-idx="${idx}"]`);
+    if(btn){btn.classList.add('correct');}
+    setTimeout(()=>{ S.screen='reveal'; render(); }, 600);
+  } else {
+    const btn = document.querySelector(`.answer-btn[data-idx="${idx}"]`);
+    if(btn){btn.classList.add('wrong');}
+    // show correct too
+    const correct = document.querySelector(`.answer-btn[data-idx="${q.correctIndex}"]`);
+    if(correct){correct.classList.add('reveal-correct');}
+    setTimeout(()=>{ S.screen='reveal-wrong'; render(); }, 700);
+  }
+}
+function handleTimeout(){
+  S.chosen = -1; S.isCorrect = false;
+  // highlight correct
+  const q = S.questions[S.qIndex];
+  const correct = document.querySelector(`.answer-btn[data-idx="${q.correctIndex}"]`);
+  if(correct){correct.classList.add('reveal-correct');}
+  setTimeout(()=>{ S.screen='reveal-wrong'; render(); }, 600);
+}
+function nextQuestion(){
+  if(!S.isCorrect){
+    saveScore();
+    S.screen='gameover'; render(); return;
+  }
+  if(S.qIndex+1>=S.questions.length){
+    saveScore();
+    S.screen='gameover'; render(); return;
+  }
+  S.qIndex++;
+  S.screen='question'; render(); startTimer();
+}
+
+// ============================
+// SHARE TEXT
+// ============================
+function buildShareText(){
+  const emojis = ['🔥','🔥','🔥','🔥','🔥','💡','💡','💡','💡','💡','🧠','🧠','🧠','🧠','🧠','🏆','🏆','🏆','🏆','🚀'];
+  const fireStr = emojis.slice(0,Math.min(S.survived,20)).join('');
+  return `🎯 I survived ${S.survived} questions in Trivia Sprint!\n📊 Score: ${S.score.toLocaleString()} pts\n${fireStr}\n🕹️ Can you beat me? Play at: ${GAME_URL}`;
+}
+async function copyShareText(){
+  try{
+    await navigator.clipboard.writeText(buildShareText());
+    const btn = document.getElementById('share-btn');
+    if(btn){btn.textContent='✓ Copied!';setTimeout(()=>{if(btn)btn.textContent='📋 Copy share text';},2000);}
+  }catch(e){}
+}
+
+// ============================
+// HELPERS
+// ============================
+function getDifficultyPips(diff){
+  const levels = {easy:1,medium:2,hard:3,expert:4};
+  const n = levels[diff]||1;
+  let html='<div class="difficulty-pip">';
+  for(let i=1;i<=4;i++){
+    let cls='pip';
+    if(i<=n){
+      cls+=' active';
+      if(diff==='medium') cls+=' med';
+      if(diff==='hard') cls+=' hard';
+      if(diff==='expert') cls+=' exp';
+    }
+    html+=`<div class="${cls}"></div>`;
+  }
+  return html+'</div>';
+}
+function getLabels(){return['A','B','C','D'];}
+
+function getRankEmoji(i){
+  if(i===0) return '<span class="lb-rank gold">🥇</span>';
+  if(i===1) return '<span class="lb-rank silver">🥈</span>';
+  if(i===2) return '<span class="lb-rank bronze">🥉</span>';
+  return `<span class="lb-rank other">${i+1}</span>`;
+}
+
+// ============================
+// RENDER SCREENS
+// ============================
+function renderWelcome(){
+  return `<div class="screen-enter">
+    <div style="text-align:center;margin-bottom:24px;">
+      <h1 class="game-title">TRIVIA<br><span>SPRINT</span></h1>
+      <p style="color:var(--muted);font-size:1rem;margin-top:8px;font-weight:600;">How far can you go before you crack?</p>
+    </div>
+    <div class="mascot-wrap">${getMascot('idle')}</div>
+    <div class="card" style="margin-top:0;">
+      <p style="text-align:center;font-size:.9rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;">Enter Your Name</p>
+      <input class="name-input" id="name-input" type="text" placeholder="Your name…" maxlength="24" autocomplete="off"
+        onkeydown="if(event.key==='Enter')startGame()"/>
+      <div style="height:16px;"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:1.2rem;padding:16px;"
+        onclick="startGame()">
+        🚀 START SPRINTING
+      </button>
+      <hr class="divider">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;text-align:center;margin-top:0;">
+        <div>
+          <div style="font-size:1.5rem;">⚡</div>
+          <div style="font-size:.8rem;color:var(--muted);font-weight:700;margin-top:4px;">10 sec timer</div>
+        </div>
+        <div>
+          <div style="font-size:1.5rem;">📈</div>
+          <div style="font-size:.8rem;color:var(--muted);font-weight:700;margin-top:4px;">Gets harder</div>
+        </div>
+        <div>
+          <div style="font-size:1.5rem;">💀</div>
+          <div style="font-size:.8rem;color:var(--muted);font-weight:700;margin-top:4px;">One wrong = out</div>
+        </div>
+      </div>
+    </div>
+    ${S.leaderboard.length>0?renderLeaderboard(true):''}
+  </div>`;
+}
+
+function renderLoading(){
+  return `<div class="screen-enter" style="text-align:center;padding:40px 0;">
+    <h2 style="font-family:'Boogaloo',cursive;font-size:2rem;color:var(--yellow);margin-bottom:8px;">Loading Questions…</h2>
+    <p style="color:var(--muted);margin-bottom:24px;font-weight:600;">Brewing up something diabolical</p>
+    <div class="mascot-wrap">${getMascot('stressed')}</div>
+    <div class="loading-dots" style="margin-top:24px;">
+      <span></span><span></span><span></span>
+    </div>
+  </div>`;
+}
+
+function renderQuestion(){
+  const q = S.questions[S.qIndex];
+  if(!q) return '';
+  const totalQs = S.questions.length;
+  const labels = getLabels();
+  return `<div class="screen-enter">
+    <div class="hud">
+      <div class="hud-item">
+        <div class="hud-label">Score</div>
+        <div class="hud-value">${S.score.toLocaleString()}</div>
+      </div>
+      <div style="text-align:center;">
+        ${getMascot(S.timeLeft<=3?'panicking':S.timeLeft<=6?'stressed':'idle')}
+      </div>
+      <div class="hud-item">
+        <div class="hud-label">Question</div>
+        <div class="hud-value">${S.qIndex+1}/${totalQs}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span class="category-badge">📂 ${q.category||'General'}</span>
+        <span id="timer-text" class="timer-text">10</span>
+      </div>
+      <div class="timer-bar-wrap">
+        <div class="timer-bar" id="timer-bar" style="width:100%;background:var(--teal);"></div>
+      </div>
+      ${getDifficultyPips(q.difficulty||'easy')}
+      <p class="question-number">Question ${S.qIndex+1} of ${totalQs}</p>
+      <p class="question-text">${q.question}</p>
+      <div class="answer-grid">
+        ${(q.options||[]).map((opt,i)=>`
+          <button class="answer-btn" data-idx="${i}" onclick="handleAnswer(${i})">
+            <span class="answer-label">${labels[i]}</span>
+            <span>${opt}</span>
+          </button>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderReveal(won){
+  const q = S.questions[S.qIndex];
+  const mood = won?'happy':'sad';
+  const pts = won?Math.max(100,S.timeLeft*100):0;
+  return `<div class="screen-enter">
+    <div class="card">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div class="mascot-wrap" style="margin:0 0 12px;">${getMascot(mood)}</div>
+        ${won
+          ?`<div style="font-family:'Boogaloo',cursive;font-size:2.5rem;color:var(--green);">✓ Correct!</div>
+            <div style="font-size:1rem;color:var(--muted);font-weight:700;">+${pts.toLocaleString()} points</div>`
+          :`<div style="font-family:'Boogaloo',cursive;font-size:2.5rem;color:var(--red);">${S.chosen===-1?'⏰ Time\'s Up!':'✗ Wrong!'}</div>
+            <div style="font-size:1rem;color:var(--muted);font-weight:700;">The streak ends here</div>`}
+      </div>
+      <div style="background:rgba(255,255,255,.04);border-radius:12px;padding:14px 18px;margin-bottom:0;">
+        <p style="font-size:.8rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Correct Answer</p>
+        <p style="font-weight:700;font-size:1.05rem;color:var(--green);">${q.options[q.correctIndex]}</p>
+      </div>
+      <div class="fun-fact-box">
+        <div class="fun-fact-label">💡 Fun Fact</div>
+        <p class="fun-fact-text">${q.funFact||''}</p>
+      </div>
+      <div style="margin-top:24px;text-align:center;">
+        ${won
+          ?`<button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="nextQuestion()">
+              Next Question ➜
+            </button>`
+          :`<button class="btn btn-primary" style="width:100%;justify-content:center;background:linear-gradient(135deg,var(--coral),#FF3E3E);color:#fff;" onclick="nextQuestion()">
+              See My Results ➜
+            </button>`}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderGameover(){
+  const isAllCorrect = S.survived>=S.questions.length;
+  const fireEmojis = '🔥'.repeat(Math.min(S.survived,10));
+  const shareText = buildShareText();
+  return `<div class="screen-enter">
+    <div class="card" style="text-align:center;margin-bottom:16px;">
+      <div class="mascot-wrap">${getMascot(S.survived>15?'happy':S.survived>5?'idle':'sad')}</div>
+      <div style="font-family:'Boogaloo',cursive;font-size:1.2rem;color:var(--muted);margin-bottom:4px;">
+        ${isAllCorrect?'🏆 PERFECT RUN!':'GAME OVER'}
+      </div>
+      <div class="result-score">${S.survived}</div>
+      <div style="color:var(--muted);font-weight:700;margin-bottom:4px;">questions answered</div>
+      <div class="result-pts">${S.score.toLocaleString()} pts</div>
+      <div style="font-size:1.5rem;margin:12px 0;">${fireEmojis||'😅'}</div>
+      <hr class="divider" style="margin:16px 0;">
+      <p style="font-size:.8rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📤 Share Your Result</p>
+      <div class="share-box" onclick="copyShareText()" title="Click to copy">
+        <strong>Click to copy</strong>
+        ${shareText.replace(/\n/g,'<br>')}
+      </div>
+      <button id="share-btn" class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:12px;" onclick="copyShareText()">
+        📋 Copy share text
+      </button>
+      <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;">
+        <button class="btn btn-primary" style="padding:12px 28px;" onclick="restartGame()">🔄 Play Again</button>
+      </div>
+    </div>
+    ${renderLeaderboard(false)}
+  </div>`;
+}
+
+function renderLeaderboard(compact){
+  if(S.leaderboard.length===0) return '';
+  const today = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const rows = compact?S.leaderboard.slice(0,3):S.leaderboard;
+  return `<div class="card" style="margin-top:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div>
+        <div style="font-family:'Boogaloo',cursive;font-size:1.5rem;">🏅 Daily Leaderboard</div>
+        <div style="font-size:.8rem;color:var(--muted);font-weight:600;">${today}</div>
+      </div>
+    </div>
+    ${rows.map((e,i)=>`
+      <div class="lb-row">
+        ${getRankEmoji(i)}
+        <span class="lb-name">${escHtml(e.name||'Anonymous')}</span>
+        <span class="lb-score">${(e.score||0).toLocaleString()}</span>
+        <span class="lb-qs">${e.survived||0}Q</span>
+      </div>`).join('')}
+    ${compact&&S.leaderboard.length>3?`<p style="text-align:center;font-size:.85rem;color:var(--muted);margin-top:8px;font-weight:600;">+${S.leaderboard.length-3} more entries</p>`:''}
+  </div>`;
+}
+
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ============================
+// MAIN RENDER
+// ============================
+function render(){
+  const app = document.getElementById('app');
+  const screens = {
+    welcome: renderWelcome,
+    loading: renderLoading,
+    question: ()=>renderQuestion(),
+    reveal: ()=>renderReveal(true),
+    'reveal-wrong': ()=>renderReveal(false),
+    gameover: renderGameover
+  };
+  app.innerHTML = (screens[S.screen]||renderWelcome)();
+  // Re-bind timer bar if on question screen
+  if(S.screen==='question') updateTimerBar();
+}
+
+// ============================
+// FLOW
+// ============================
+function startGame(){
+  const input = document.getElementById('name-input');
+  const name = (input?input.value.trim():S.name)||'Anonymous';
+  if(!name){input&&input.focus();return;}
+  S.name = name;
+  fetchQuestions();
+}
+function restartGame(){
+  stopTimer();
+  S.qIndex=0;S.score=0;S.survived=0;S.chosen=null;S.isCorrect=null;
+  S.screen='welcome';render();
+}
+
+// ============================
+// BOOT
+// ============================
+loadLeaderboard().then(render);
+</script>
+</body>
+</html>
